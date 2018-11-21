@@ -1,5 +1,7 @@
 import pandas as pd
+
 import geopy.distance
+# Refer to: https://geopy.readthedocs.io/en/stable/#geopy.distance.geodesic
 
 # Limiting coordinates for NYC
 LAT_NORTH = 40.917577
