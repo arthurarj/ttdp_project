@@ -12,4 +12,5 @@ from grid_trip_distance_feature import *
 
 # Time
 from average_hour_feature import *
+from average_speed_feature import *
 from week_day_feature import *
