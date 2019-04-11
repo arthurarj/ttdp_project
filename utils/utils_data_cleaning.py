@@ -19,13 +19,10 @@ columns_to_drop = ['VendorID',
                    'RatecodeID', 
                    'store_and_fwd_flag', 
                    'payment_type', 
-                   'fare_amount', 
                    'extra', 
                    'mta_tax',
-                   'tip_amount',
                    'tolls_amount',
                    'improvement_surcharge',
-                   'total_amount',
                    'PULocationID',
                    'DOLocationID']
 
@@ -62,7 +59,7 @@ def load_taxi_data_chunk(chunk = 10, raw = False):
     return df
 
 def handle_missing_data(df):
-    df_size = df.index.size         # Track size of dataset 
+    #df_size = df.index.size         # Track size of dataset 
     df.dropna(inplace=True)         # Remove rows with NaN values
     
     # Before performing operations, make sure everything is numeric
@@ -71,25 +68,28 @@ def handle_missing_data(df):
     df.drop(df[df.pu_lat * df.pu_lon * df.do_lat * df.do_lat == 0].index, inplace=True)
     df.drop(df[(df.pu_lat == df.do_lat) | (df.pu_lon == df.do_lon)].index, inplace=True)
     df.drop(df[df.trip_dist == 0].index, inplace=True)
-    print('Size reduction from {0} to {1} ({2} samples dropped for missing data)'.format(df_size, df.index.size, df_size - df.index.size))
+    #print('Size reduction from {0} to {1} ({2} samples dropped for missing data)'.format(df_size, df.index.size, df_size - df.index.size))
     
     return df
-    
+
+def handle_invalid_coordinates(df):
+    # Latitudes must be in the [-90; 90] range
+    df.drop(df[~df.pu_lat.between(-90,90)].index, inplace=True)
+    df.drop(df[~df.do_lat.between(-90,90)].index, inplace=True)
+    # Longitudes must be in the [-180; 180] range
+    df.drop(df[~df.pu_lon.between(-180,180)].index, inplace=True)
+    df.drop(df[~df.do_lon.between(-180,180)].index, inplace=True)
+
 def handle_duration_outliers(df, threshold):
-    df_size = df.index.size 
+    df.drop(df[df.duration == 0].index, inplace=True)
     df.drop(df[df.duration > threshold].index, inplace=True)
-    print('Size reduction from {0} to {1} ({2} samples dropped for having longer duration than {3} seconds)'.format(df_size, df.index.size, df_size - df.index.size, threshold))
     
 def handle_spatial_outliers(df):
-    df_size = df.index.size 
     df.drop(df[(df.pu_lat > LAT_NORTH) | (df.pu_lat < LAT_SOUTH)].index, inplace=True)
     df.drop(df[(df.pu_lon >  LON_EAST) | (df.pu_lon <  LON_WEST)].index, inplace=True)
     df.drop(df[(df.do_lat > LAT_NORTH) | (df.do_lat < LAT_SOUTH)].index, inplace=True)
     df.drop(df[(df.do_lon >  LON_EAST) | (df.do_lon <  LON_WEST)].index, inplace=True)
-    print('Size reduction from {0} to {1} ({2} samples dropped for having outside the region of interest)'.format(df_size, df.index.size, df_size - df.index.size))
 
 def handle_invalid_trips(df):
-    df_size = df.index.size 
-    df.drop(df[df.trip_dist/df.vec_dist > MAX_RATIO].index, inplace=True)
+    df.drop(df[df.trip_ratio > MAX_RATIO].index, inplace=True)
     df.drop(df[df.vec_dist < MIN_VEC_DIST].index, inplace=True)
-    print('Size reduction from {0} to {1} ({2} samples dropped for being invalid)'.format(df_size, df.index.size, df_size - df.index.size))

@@ -7,7 +7,7 @@ class WeekDayFeature(FeatureDecorator):
     """
     def getFeatures(self):
         inner_df = self._component.getFeatures()
-        print('Extracting WeekDay Features...')
+        print('\t Extracting WeekDay Features...')
 
         cur_df = pd.DataFrame(index=self._dataset.index)
         cur_df['week_day'] = self._dataset.apply(self._getWeekDayFeature, axis = 1)
